@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'style.css' %}"/>
+</head>
+<body>
+
+  <nav>
+    <div class="logo"></div>
+    <div class="nav-pills">
+      <button class="pill active" onclick="showPage('pred', this)">Previsor de Empréstimo</button>
+      <!-- <button class="pill"        onclick="showPage('emi',  this)">Calculadora de Parcela</button> -->
+    </div>
+  </nav>
+
+  <div id="pred" class="page active">
+    <div class="hero">
+      <span class="badge">Modelo de regressão logística treinado prevê a probabilidade de aprovação em tempo real</span>
+    </div>
+
+    <div class="container">
+      <div class="two-col">
+
+        <div class="card">
+          <div class="card-head">
+            <div class="ic ic-gold">👤</div>
+            <div>
+              <div class="card-title">Seu perfil financeiro</div>
+              <div class="card-sub">Todos os dados permanecem na sua máquina — nada é enviado externamente</div>
+            </div>
+          </div>
+
+          <div class="section-divider">Renda e dados pessoais</div>
+          <div class="row2">
+            <div class="field">
+              <label>Renda do solicitante (₹ / mês)</label>
+              <div class="pfx"><span>₹</span>
+                <input type="number" id="applicantIncome" value="100000" min="0" oninput="calcDTI()"/>
+              </div>
+              <span class="field-hint">ex.: ₹1,00,000 por mês</span>
+            </div>
+            <div class="field">
+              <label>Renda do co-solicitante (₹ / mês)</label>
+              <div class="pfx"><span>₹</span>
+                <input type="number" id="coapplicantIncome" value="0" min="0"/>
+              </div>
+              <span class="field-hint">Digite 0 caso não exista</span>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Idade</label>
+              <input type="number" id="age" value="35" min="21" max="65"/>
+            </div>
+            <div class="field">
+              <label>Número de dependentes</label>
+              <input type="number" id="dependents" value="1" min="0" max="4"/>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Economias / poupança (₹)</label>
+              <div class="pfx"><span>₹</span>
+                <input type="number" id="savings" value="300000" min="0"/>
+              </div>
+              <span class="field-hint">ex.: ₹3,00,000</span>
+            </div>
+            <div class="field">
+              <label>Valor da garantia (₹)</label>
+              <div class="pfx"><span>₹</span>
+                <input type="number" id="collateralValue" value="5000000" min="0"/>
+              </div>
+              <span class="field-hint">ex.: valor do imóvel de ₹50,00,000</span>
+            </div>
+          </div>
+
+          <div class="section-divider">Detalhes do empréstimo</div>
+          <div class="row2">
+            <div class="field">
+              <label>Valor do empréstimo (₹)</label>
+              <div class="pfx"><span>₹</span>
+                <input type="number" id="loanAmount" value="2000000" min="0"/>
+              </div>
+              <span class="field-hint">ex.: ₹20,00,000</span>
+            </div>
+            <div class="field">
+              <label>Prazo do empréstimo (meses)</label>
+              <input type="number" id="loanTerm" value="60" min="6" max="360"/>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Finalidade do empréstimo</label>
+              <select id="loanPurpose">
+                <option value="car">Carro</option>
+                <option value="education">Educação</option>
+                <option value="home">Casa</option>
+                <option value="personal" selected>Pessoal</option>
+                <option value="business">Negócios</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Área do imóvel</label>
+              <select id="propertyArea">
+                <option value="rural">Rural</option>
+                <option value="semiurban">Semiurbana</option>
+                <option value="urban" selected>Urbana</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="section-divider">Perfil de crédito</div>
+          <div class="field slider-field">
+            <div class="slider-header">
+              <label>Score de crédito</label>
+              <span class="slider-val" id="csDisplay">700</span>
+            </div>
+            <input type="range" id="creditScore" class="slider" min="300" max="900" value="700"
+              oninput="syncSlider(this, 'csDisplay', '')"/>
+            <div class="slider-ticks">
+              <span>300 (Ruim)</span><span>600 (Regular)</span><span>900 (Excelente)</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Empréstimos existentes</label>
+            <input type="number" id="existingLoans" value="0" min="0" max="6"/>
+          </div>
+
+          <div class="dti-calculator">
+            <div class="dti-calc-title">📊 Calculadora de comprometimento da renda</div>
+            <div class="dti-calc-sub">Calculamos seu DTI automaticamente — informe apenas suas dívidas mensais</div>
+            <div class="row2" style="margin-top:14px;">
+              <div class="field">
+                <label>Renda mensal (₹)</label>
+                <div class="pfx"><span>₹</span>
+                  <input type="number" id="monthlyIncome" placeholder="Automático pela renda acima" min="0" oninput="calcDTI()"/>
+                </div>
+                <span class="field-hint">Deixe em branco para usar a renda do solicitante</span>
+              </div>
+              <div class="field">
+                <label>Pagamentos mensais de dívidas (₹)</label>
+                <div class="pfx"><span>₹</span>
+                  <input type="number" id="monthlyDebt" value="25000" min="0" oninput="calcDTI()"/>
+                </div>
+                <span class="field-hint">Todas as parcelas atuais + pagamentos de empréstimos</span>
+              </div>
+            </div>
+            <div class="dti-result-row">
+              <div>
+                <div class="dti-result-label">Seu índice DTI</div>
+                <div class="dti-result-hint" id="dtiHint">Informe sua dívida mensal para calcular</div>
+              </div>
+              <div class="dti-badge" id="dtiBadge">—</div>
+            </div>
+          </div>
+
+          <div class="section-divider">Emprego e dados complementares</div>
+          <div class="row2">
+            <div class="field">
+              <label>Situação de emprego</label>
+              <select id="employmentStatus">
+                <option value="salaried" selected>Assalariado</option>
+                <option value="contract">Contrato</option>
+                <option value="self-employed">Autônomo</option>
+                <option value="unemployed">Desempregado</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Categoria do empregador</label>
+              <select id="employerCategory">
+                <option value="government">Governo</option>
+                <option value="mnc">Multinacional</option>
+                <option value="private" selected>Privado</option>
+                <option value="business">Negócios</option>
+                <option value="unemployed">Desempregado</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Escolaridade</label>
+              <select id="educationLevel">
+                <option value="0" selected>Graduado</option>
+                <option value="1">Não graduado</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Estado civil</label>
+              <select id="maritalStatus">
+                <option value="married" selected>Casado</option>
+                <option value="single">Solteiro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Gênero</label>
+              <select id="gender">
+                <option value="male" selected>Masculino</option>
+                <option value="female">Feminino</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="predError" class="error-msg" style="display:none;"></div>
+          <button class="btn-primary" id="predictBtn" onclick="runPrediction()">
+            ⚡ Verificar probabilidade de aprovação
+          </button>
+        </div>
+
+        <div class="result-panel" id="resultPanel">
+          <div class="rp-title">📊 Resultado da previsão</div>
+          <div class="placeholder" id="placeholder">
+            <div class="placeholder-icon">🔮</div>
+            <p>Preencha seus dados e clique em <strong>Verificar probabilidade de aprovação</strong> para ver o resultado.</p>
+          </div>
+          <div id="resultContent" style="display:none;">
+            <div class="ring-section">
+              <div class="ring-wrapper">
+                <svg class="ring-svg" viewBox="0 0 160 160">
+                  <circle class="ring-track" cx="80" cy="80" r="68"/>
+                  <circle class="ring-fill"  cx="80" cy="80" r="68" id="ringArc"/>
+                </svg>
+                <div class="ring-center">
+                  <div class="ring-pct" id="ringPct">0<span>%</span></div>
+                  <div class="ring-label">chance de aprovação</div>
+                </div>
+              </div>
+              <div class="verdict" id="verdictText">—</div>
+            </div>
+            <div style="margin-top:20px;">
+              <div class="section-label">Fatores principais</div>
+              <div id="factorBars"></div>
+            </div>
+            <div class="dti-row">
+              <div>
+                <div class="dti-name">Índice dívida/renda</div>
+                <div class="dti-hint-text">Quanto menor, melhor — ideal abaixo de 35%</div>
+              </div>
+              <div class="dti-val" id="dtiValue">—</div>
+            </div>
+            <div id="tipsContainer" style="margin-top:4px;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="emi" class="page">
+    <div class="hero">
+      <span class="badge">◆ Planejamento inteligente de parcelas</span>
+      <h1>Calcule sua <em>parcela mensal</em><br/>com detalhamento completo</h1>
+      <p>Escolha entre saldo devedor, taxa fixa ou juros compostos.</p>
+    </div>
+    <div class="container">
+      <div class="two-col" style="margin-bottom:24px;">
+
+        <div class="card">
+          <div class="card-head">
+            <div class="ic ic-teal">🧮</div>
+            <div>
+              <div class="card-title">Parâmetros do empréstimo</div>
+              <div class="card-sub">Ajuste os controles para atualizar instantaneamente</div>
+            </div>
+          </div>
+          <div class="field slider-field">
+            <div class="slider-header">
+              <label>Valor do empréstimo</label>
+              <span class="slider-val" id="eAmtDisplay">₹5,00,000</span>
+            </div>
+            <input type="range" id="eAmt" class="slider"
+              min="10000" max="50000000" step="10000" value="500000"
+              oninput="syncEmiSlider(this,'eAmtDisplay',true); calcEmi()"/>
+            <div class="slider-ticks"><span>₹10K</span><span>₹2.5Cr</span><span>₹5Cr</span></div>
+          </div>
+          <div class="field slider-field">
+            <div class="slider-header">
+              <label>Taxa de juros anual</label>
+              <span class="slider-val" id="eRateDisplay">10.5%</span>
+            </div>
+            <input type="range" id="eRate" class="slider"
+              min="1" max="36" step="0.5" value="10.5"
+              oninput="syncEmiSlider(this,'eRateDisplay',false,1,'%'); calcEmi()"/>
+            <div class="slider-ticks"><span>1%</span><span>18%</span><span>36%</span></div>
+          </div>
+          <div class="field slider-field">
+            <div class="slider-header">
+              <label>Prazo</label>
+              <span class="slider-val" id="eTenDisplay">36 meses</span>
+            </div>
+            <input type="range" id="eTen" class="slider"
+              min="6" max="360" step="6" value="36"
+              oninput="syncEmiSlider(this,'eTenDisplay',false,0,' meses'); calcEmi()"/>
+            <div class="slider-ticks"><span>6m</span><span>15 anos</span><span>30 anos</span></div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Tipo de juros</label>
+              <select id="interestType" onchange="calcEmi()">
+                <option value="reducing">Saldo devedor</option>
+                <option value="flat">Taxa fixa</option>
+                <option value="compound">Juros compostos</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Taxa de processamento (%)</label>
+              <input type="number" id="eProcFee" value="1" min="0" max="10" step="0.1" oninput="calcEmi()"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Pagamento extra mensal (₹)</label>
+            <div class="pfx"><span>₹</span>
+              <input type="number" id="ePrepay" value="0" min="0" oninput="calcEmi()"/>
+            </div>
+          </div>
+          <div id="emiError" class="error-msg" style="display:none;"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="ic ic-gold">💰</div>
+            <div>
+              <div class="card-title">Resumo da parcela</div>
+              <div class="card-sub" id="emiMethodLabel">Método de saldo devedor</div>
+            </div>
+          </div>
+          <div id="interestNote" class="info-note" style="display:none;"></div>
+          <div id="prepayNote"   class="warn-note" style="display:none;"></div>
+          <div class="emi-table">
+            <div class="emi-row"><span class="emi-label">Parcela mensal</span><span class="emi-value gold big" id="eEmi">₹0</span></div>
+            <div class="emi-row"><span class="emi-label">Valor principal</span><span class="emi-value" id="ePrin">₹0</span></div>
+            <div class="emi-row"><span class="emi-label">Juros totais</span><span class="emi-value red" id="eInterest">₹0</span></div>
+            <div class="emi-row"><span class="emi-label">Taxa de processamento</span><span class="emi-value" id="eProcAmt">₹0</span></div>
+            <div class="emi-row"><span class="emi-label">Custo total do empréstimo</span><span class="emi-value teal" id="eTotal">₹0</span></div>
+            <div class="emi-row"><span class="emi-label">Prazo efetivo</span><span class="emi-value" id="eEffTen">—</span></div>
+          </div>
+          <div class="donut-wrap">
+            <svg class="donut-svg" viewBox="0 0 160 160">
+              <circle class="donut-track"     cx="80" cy="80" r="58"/>
+              <circle class="donut-principal" cx="80" cy="80" r="58" id="dPrincipal"/>
+              <circle class="donut-interest"  cx="80" cy="80" r="58" id="dInterest"/>
+            </svg>
+            <div class="donut-legend">
+              <div class="legend-item"><span class="dot green-dot"></span>Valor principal</div>
+              <div class="legend-item"><span class="dot red-dot"></span>Juros</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="ic ic-teal">📋</div>
+          <div>
+            <div class="card-title">Cronograma de amortização</div>
+            <div class="card-sub">Detalhamento anual dos pagamentos</div>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Ano</th><th>Saldo inicial</th><th>Principal pago</th>
+                <th>Juros pagos</th><th>Total pago</th><th>Saldo final</th>
+              </tr>
+            </thead>
+            <tbody id="amortBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="{% static 'script.js' %}"></script>
+  <script>window.CSRF_TOKEN = '{{ csrf_token }}';</script>
+</body>
+</html>
